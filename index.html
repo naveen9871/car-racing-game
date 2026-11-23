@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TurboOutrun - Retro 3D Arcade Racer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Press+Start+2P&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Main Render Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Scanline / CRT Vignette Overlay for retro arcade feel -->
+    <div id="crt-overlay"></div>
+
+    <!-- HUD Overlay -->
+    <div id="hud" class="hud-layer hidden">
+      <!-- Top Bar: Score, Speed, Stage/Time -->
+      <div class="hud-top">
+        <div class="hud-panel hud-score">
+          <div class="hud-label">SCORE</div>
+          <div id="hud-score-val" class="hud-value">000000</div>
+        </div>
+
+        <div class="hud-panel hud-timer">
+          <div class="hud-label">TIME LEFT</div>
+          <div id="hud-timer-val" class="hud-value">60.0</div>
+        </div>
+
+        <div class="hud-panel hud-stage">
+          <div class="hud-label">STAGE</div>
+          <div id="hud-stage-val" class="hud-value">1</div>
+        </div>
+      </div>
+
+      <!-- Minimap / Progress Track Bar -->
+      <div class="track-progress-container">
+        <div class="track-label">CHECKPOINT PROGRESS</div>
+        <div class="track-bar">
+          <div id="player-progress-marker" class="progress-car-icon">🏎️</div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar: Gauges & Controls info -->
+      <div class="hud-bottom">
+        <!-- Speedometer & Tachometer -->
+        <div class="gauge-cluster">
+          <div class="speedo-container">
+            <span id="hud-speed-val" class="speed-number">0</span>
+            <span class="speed-unit">KM/H</span>
+          </div>
+          
+          <div class="tach-container">
+            <div class="tach-bar-bg">
+              <div id="tach-bar-fill" class="tach-bar-fill"></div>
+            </div>
+            <div class="tach-label">RPM</div>
+          </div>
+
+          <!-- Nitro Meter -->
+          <div class="nitro-container">
+            <div class="nitro-label">NITRO BOOST [SPACE]</div>
+            <div class="nitro-bar-bg">
+              <div id="nitro-bar-fill" class="nitro-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio & Camera shortcuts -->
+        <div class="hud-toggles">
+          <button id="btn-sound-toggle" class="hud-icon-btn" title="Toggle Sound (M)">🔊</button>
+          <button id="btn-theme-toggle" class="hud-icon-btn" title="Toggle Theme (T)">🌆</button>
+          <button id="btn-pause-toggle" class="hud-icon-btn" title="Pause Game (P)">⏸️</button>
+        </div>
+      </div>
+
+      <!-- Speed Lines / Nitro Flash effect container -->
+      <div id="nitro-flash"></div>
+      <div id="crash-flash"></div>
+    </div>
+
+    <!-- On-screen Mobile Touch Controls -->
+    <div id="touch-controls" class="touch-layer hidden">
+      <div class="touch-steer-group">
+        <button id="touch-left" class="touch-btn touch-btn-steer">◀</button>
+        <button id="touch-right" class="touch-btn touch-btn-steer">▶</button>
+      </div>
+      <div class="touch-pedal-group">
+        <button id="touch-nitro" class="touch-btn touch-btn-nitro">⚡ NITRO</button>
+        <div class="pedals-row">
+          <button id="touch-brake" class="touch-btn touch-btn-brake">BRAKE</button>
+          <button id="touch-gas" class="touch-btn touch-btn-gas">GAS</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start / Title Screen Overlay -->
+    <div id="screen-start" class="screen-overlay active">
+      <div class="title-card">
+        <div class="retro-grid-bg"></div>
+        <div class="sun-graphic"></div>
+        <h1 class="game-logo">TURBO<span>RACER</span></h1>
+        <p class="game-tagline">3D RETRO HIGHWAY DRIFT & SPEED</p>
+        
+        <div class="car-selection">
+          <h3>SELECT YOUR MACHINE</h3>
+          <div class="car-options">
+            <button class="car-card selected" data-car="ferrari">
+              <div class="car-color-preview red"></div>
+              <div class="car-title">Veloce Red</div>
+              <div class="car-stat">Top Speed: 290 km/h</div>
+            </button>
+            <button class="car-card" data-car="cyber">
+              <div class="car-color-preview neon"></div>
+              <div class="car-title">Neon Cyber</div>
+              <div class="car-stat">Handling: High Drift</div>
+            </button>
+            <button class="car-card" data-car="thunder">
+              <div class="car-color-preview yellow"></div>
+              <div class="car-title">Thunder GT</div>
+              <div class="car-stat">Nitro: 2x Boost</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="controls-guide">
+          <div class="control-key"><span>↑ / W</span> Accelerate</div>
+          <div class="control-key"><span>↓ / S</span> Brake</div>
+          <div class="control-key"><span>← → / A D</span> Steer</div>
+          <div class="control-key"><span>SPACE</span> Nitro Boost</div>
+          <div class="control-key"><span>M</span> Mute Sound</div>
+        </div>
+
+        <button id="btn-start-game" class="btn-primary-action pulse">
+          INSERT COIN & START [ENTER]
+        </button>
+      </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="screen-pause" class="screen-overlay hidden">
+      <div class="dialog-box">
+        <h2>GAME PAUSED</h2>
+        <div class="dialog-actions">
+          <button id="btn-resume" class="btn-primary-action">RESUME RACE</button>
+          <button id="btn-restart-from-pause" class="btn-secondary-action">RESTART</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="screen-gameover" class="screen-overlay hidden">
+      <div class="dialog-box gameover-box">
+        <h2 class="gameover-title">TIME'S UP!</h2>
+        <div class="score-summary">
+          <div class="summary-row">
+            <span>FINAL SCORE</span>
+            <span id="final-score-val" class="highlight">0</span>
+          </div>
+          <div class="summary-row">
+            <span>MAX SPEED</span>
+            <span id="final-speed-val">0 KM/H</span>
+          </div>
+          <div class="summary-row">
+            <span>DISTANCE COVERED</span>
+            <span id="final-dist-val">0 KM</span>
+          </div>
+          <div class="summary-row">
+            <span>CARS OVERTAKEN</span>
+            <span id="final-overtake-val">0</span>
+          </div>
+          <div class="summary-row">
+            <span>HIGH SCORE</span>
+            <span id="high-score-val" class="gold">0</span>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button id="btn-play-again" class="btn-primary-action pulse">RACE AGAIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/road.js"></script>
+  <script src="js/car.js"></script>
+  <script src="js/traffic.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,731 @@
+/* ==========================================================================
+   TurboOutrun - Retro 3D Arcade Racer Stylesheet
+   ========================================================================== */
+
+:root {
+  --neon-pink: #ff2a85;
+  --neon-cyan: #00f0ff;
+  --neon-yellow: #ffe600;
+  --neon-purple: #9d00ff;
+  --neon-orange: #ff6e27;
+  --dark-bg: #0c0814;
+  --panel-bg: rgba(18, 12, 36, 0.82);
+  --border-neon: rgba(0, 240, 255, 0.5);
+  --font-retro: 'Press Start 2P', monospace, cursive;
+  --font-digital: 'Orbitron', 'Rajdhani', sans-serif;
+  --font-ui: 'Rajdhani', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--dark-bg);
+  color: #fff;
+  font-family: var(--font-digital);
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #1e0836 0%, #080310 100%);
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* CRT Scanlines and curvature illusion */
+#crt-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+              radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.6) 100%);
+  background-size: 100% 4px, 100% 100%;
+  opacity: 0.75;
+}
+
+/* ==========================================================================
+   HUD Layout
+   ========================================================================== */
+
+.hud-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  z-index: 15;
+  transition: opacity 0.3s ease;
+}
+
+.hud-layer.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.hud-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-neon);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 20px;
+  min-width: 140px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+}
+
+.hud-label {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--neon-cyan);
+  margin-bottom: 4px;
+  text-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.hud-value {
+  font-family: var(--font-digital);
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.hud-timer .hud-value {
+  color: var(--neon-yellow);
+  text-shadow: 0 0 10px var(--neon-yellow);
+}
+
+.hud-timer.urgent .hud-value {
+  color: #ff1c43;
+  animation: pulse-urgency 0.6s infinite alternate;
+}
+
+@keyframes pulse-urgency {
+  0% { transform: scale(1); text-shadow: 0 0 10px #ff1c43; }
+  100% { transform: scale(1.15); text-shadow: 0 0 25px #ff1c43; }
+}
+
+/* Track Progress Bar */
+.track-progress-container {
+  align-self: center;
+  width: min(600px, 80vw);
+  background: var(--panel-bg);
+  border: 1px solid rgba(255, 42, 133, 0.6);
+  border-radius: 12px;
+  padding: 6px 14px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(255, 42, 133, 0.25);
+}
+
+.track-label {
+  font-family: var(--font-retro);
+  font-size: 9px;
+  color: var(--neon-pink);
+  margin-bottom: 6px;
+  letter-spacing: 1.5px;
+}
+
+.track-bar {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background: #190924;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: visible;
+}
+
+.progress-car-icon {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  transition: left 0.1s linear;
+  filter: drop-shadow(0 0 8px var(--neon-cyan));
+}
+
+/* Bottom Gauges */
+.hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.gauge-cluster {
+  background: var(--panel-bg);
+  border: 2px solid var(--neon-pink);
+  box-shadow: 0 0 20px rgba(255, 42, 133, 0.35);
+  border-radius: 12px;
+  padding: 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  backdrop-filter: blur(6px);
+  min-width: 250px;
+}
+
+.speedo-container {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.speed-number {
+  font-family: var(--font-digital);
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.speed-unit {
+  font-family: var(--font-retro);
+  font-size: 11px;
+  color: var(--neon-cyan);
+}
+
+.tach-container, .nitro-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tach-label, .nitro-label {
+  font-size: 10px;
+  font-family: var(--font-retro);
+  letter-spacing: 1px;
+  color: #aaa;
+}
+
+.nitro-label {
+  color: var(--neon-yellow);
+}
+
+.tach-bar-bg, .nitro-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tach-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #00f0ff, #ffe600, #ff1c43);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  transition: width 0.05s ease;
+}
+
+.nitro-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #ffe600, #ff6e27, #ff2a85);
+  box-shadow: 0 0 10px var(--neon-yellow);
+  transition: width 0.1s linear;
+}
+
+/* Action Toggles */
+.hud-toggles {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.hud-icon-btn {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-neon);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.hud-icon-btn:hover {
+  background: rgba(0, 240, 255, 0.3);
+  transform: scale(1.08);
+}
+
+/* Fullscreen Flash Effects */
+#nitro-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, transparent 80%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+#nitro-flash.active {
+  opacity: 1;
+}
+
+#crash-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: rgba(255, 30, 60, 0.45);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+#crash-flash.active {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Overlay Menus & Dialogs (Start, Pause, Game Over)
+   ========================================================================== */
+
+.screen-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(6, 4, 15, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 30;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.screen-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.title-card {
+  position: relative;
+  text-align: center;
+  max-width: 680px;
+  width: 90%;
+  padding: 40px 30px;
+  background: rgba(18, 12, 38, 0.95);
+  border: 3px solid var(--neon-pink);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(255, 42, 133, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.game-logo {
+  font-family: var(--font-retro);
+  font-size: clamp(28px, 6vw, 48px);
+  color: #fff;
+  letter-spacing: 3px;
+  text-shadow: 0 0 15px var(--neon-yellow), 0 0 30px var(--neon-pink);
+  transform: skew(-6deg);
+}
+
+.game-logo span {
+  color: var(--neon-pink);
+  text-shadow: 0 0 20px var(--neon-pink);
+}
+
+.game-tagline {
+  font-family: var(--font-digital);
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+}
+
+/* Car Machine Selection */
+.car-selection {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.car-selection h3 {
+  font-family: var(--font-retro);
+  font-size: 11px;
+  color: var(--neon-yellow);
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
+
+.car-options {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.car-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  width: 160px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.car-card:hover {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.car-card.selected {
+  border-color: var(--neon-pink);
+  background: rgba(255, 42, 133, 0.2);
+  box-shadow: 0 0 15px rgba(255, 42, 133, 0.4);
+}
+
+.car-color-preview {
+  width: 48px;
+  height: 24px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.car-color-preview.red {
+  background: linear-gradient(135deg, #ff1a40, #99001b);
+}
+
+.car-color-preview.neon {
+  background: linear-gradient(135deg, #00f0ff, #0066aa);
+}
+
+.car-color-preview.yellow {
+  background: linear-gradient(135deg, #ffe600, #ff8c00);
+}
+
+.car-title {
+  font-family: var(--font-digital);
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+}
+
+.car-stat {
+  font-size: 10px;
+  color: #bbb;
+}
+
+/* Controls Guide */
+.controls-guide {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  color: #ddd;
+}
+
+.control-key span {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: var(--neon-yellow);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Primary Button */
+.btn-primary-action {
+  font-family: var(--font-retro);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #0c0814;
+  background: linear-gradient(90deg, #ffe600, #ff2a85);
+  border: none;
+  padding: 16px 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(255, 42, 133, 0.6);
+  transition: all 0.2s ease;
+  font-weight: 700;
+}
+
+.btn-primary-action:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 35px rgba(255, 230, 0, 0.8);
+}
+
+.btn-primary-action.pulse {
+  animation: pulse-button 1.5s infinite;
+}
+
+@keyframes pulse-button {
+  0% { box-shadow: 0 0 15px rgba(255, 42, 133, 0.5); }
+  50% { box-shadow: 0 0 30px rgba(255, 230, 0, 0.9); }
+  100% { box-shadow: 0 0 15px rgba(255, 42, 133, 0.5); }
+}
+
+.btn-secondary-action {
+  font-family: var(--font-retro);
+  font-size: 11px;
+  color: #fff;
+  background: transparent;
+  border: 2px solid var(--neon-cyan);
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-action:hover {
+  background: rgba(0, 240, 255, 0.2);
+}
+
+/* Dialog Box */
+.dialog-box {
+  background: var(--panel-bg);
+  border: 2px solid var(--neon-cyan);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+  border-radius: 14px;
+  padding: 30px 40px;
+  text-align: center;
+  max-width: 480px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dialog-box h2 {
+  font-family: var(--font-retro);
+  font-size: 20px;
+  color: var(--neon-yellow);
+  letter-spacing: 2px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Game Over Summary */
+.gameover-title {
+  color: #ff1c43 !important;
+  text-shadow: 0 0 20px #ff1c43;
+}
+
+.score-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.summary-row .highlight {
+  font-family: var(--font-digital);
+  font-size: 18px;
+  color: var(--neon-cyan);
+}
+
+.summary-row .gold {
+  font-family: var(--font-digital);
+  font-size: 18px;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 8px var(--neon-yellow);
+}
+
+/* ==========================================================================
+   Mobile Touch Controls
+   ========================================================================== */
+
+.touch-layer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 20px 24px;
+  z-index: 18;
+}
+
+.touch-layer.hidden {
+  display: none;
+}
+
+.touch-steer-group, .touch-pedal-group {
+  pointer-events: auto;
+  display: flex;
+  gap: 12px;
+}
+
+.touch-pedal-group {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.pedals-row {
+  display: flex;
+  gap: 12px;
+}
+
+.touch-btn {
+  background: rgba(20, 15, 35, 0.7);
+  border: 2px solid var(--border-neon);
+  color: #fff;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-retro);
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+  touch-action: none;
+}
+
+.touch-btn:active {
+  background: rgba(0, 240, 255, 0.4);
+  transform: scale(0.94);
+}
+
+.touch-btn-steer {
+  width: 65px;
+  height: 65px;
+  font-size: 20px;
+}
+
+.touch-btn-gas {
+  width: 80px;
+  height: 65px;
+  background: rgba(0, 200, 100, 0.35);
+  border-color: #00ff88;
+  color: #00ff88;
+}
+
+.touch-btn-brake {
+  width: 70px;
+  height: 65px;
+  background: rgba(220, 40, 50, 0.35);
+  border-color: #ff3344;
+  color: #ff4455;
+  font-size: 11px;
+}
+
+.touch-btn-nitro {
+  width: 162px;
+  height: 40px;
+  background: rgba(255, 180, 0, 0.35);
+  border-color: #ffcc00;
+  color: #ffea00;
+  font-size: 11px;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .hud-layer {
+    padding: 12px;
+  }
+  .hud-panel {
+    min-width: 90px;
+    padding: 6px 10px;
+  }
+  .hud-value {
+    font-size: 18px;
+  }
+  .gauge-cluster {
+    padding: 8px 14px;
+    min-width: 180px;
+  }
+  .speed-number {
+    font-size: 32px;
+  }
+  .title-card {
+    padding: 24px 16px;
+    gap: 14px;
+  }
+  .car-card {
+    width: 120px;
+    padding: 8px;
+  }
+  .touch-layer {
+    display: flex;
+  }
+}
